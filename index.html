@@ -6651,8 +6651,10 @@
       // IF "แสดงเฉพาะที่ถูกเลือก" (Filter Only Selected) is ACTIVE:
       if (filterOnlySelected) {
         if (selectedVillageIds.size > 0) {
-          const checkedInBase = baseList.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
-          return checkedInBase.length > 0 ? checkedInBase : villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+          if (baseList.length > 0) {
+            return baseList.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+          }
+          return villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
         } else if (selectedVillage) {
           return villages.filter(v => String(v['ลำดับ']) === String(selectedVillage['ลำดับ']));
         } else {
@@ -6731,7 +6733,9 @@
     }
 
     function fitOnlySelectedBounds() {
-      const selectedList = villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+      const baseList = getBaseFilteredVillages();
+      const currentScope = baseList.length > 0 ? baseList : villages;
+      const selectedList = currentScope.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
       if (selectedList.length > 0) {
         fitVillagesBounds(selectedList);
         showToast(`ซูมครอบคลุมหมู่บ้านที่เลือก (${selectedList.length} แห่ง)`);
@@ -6743,8 +6747,21 @@
     }
 
     function applyCurrentFiltersAndRender(autoZoom = true) {
-      currentFilteredVillages = getFilteredVillages();
       const baseList = getBaseFilteredVillages();
+
+      // ไม่รวมข้อมูลก่อนหน้านี้! กรอง selectedVillageIds ให้เหลือเฉพาะที่อยู่ในพื้นที่ที่กำลังเลือก
+      if (baseList.length > 0 && selectedVillageIds.size > 0) {
+        const allowedIdSet = new Set(baseList.map(v => String(v['ลำดับ'])));
+        for (const id of selectedVillageIds) {
+          if (!allowedIdSet.has(id)) {
+            selectedVillageIds.delete(id);
+          }
+        }
+      } else if (baseList.length === 0 && !filterOnlySelected) {
+        selectedVillageIds.clear();
+      }
+
+      currentFilteredVillages = getFilteredVillages();
 
       // Update Directory List & Tab 1 Checklist
       renderVillageList(currentFilteredVillages);
@@ -6793,6 +6810,7 @@
       activeProvince = province;
       activeDistrict = '';
       activeTambon = '';
+      selectedVillageIds.clear(); // ล้างการเลือกเดิม ไม่รวมข้อมูลก่อนหน้านี้
 
       populateDistrictDropdown();
       populateTambonDropdown();
@@ -6804,6 +6822,7 @@
     function onDistrictChange(district) {
       activeDistrict = district;
       activeTambon = '';
+      selectedVillageIds.clear(); // ล้างการเลือกเดิม ไม่รวมข้อมูลก่อนหน้านี้
 
       populateTambonDropdown();
       renderTambonLegend();
@@ -6813,6 +6832,7 @@
 
     function onTambonChange(tambon) {
       activeTambon = tambon;
+      selectedVillageIds.clear(); // ล้างการเลือกเดิม ไม่รวมข้อมูลก่อนหน้านี้
       hideSelectedCard();
       applyCurrentFiltersAndRender(true);
     }
@@ -7214,11 +7234,13 @@
 
     function selectAllFilteredVillages() {
       const baseList = getBaseFilteredVillages();
-      const list = baseList.length > 0 ? baseList : villages;
+      const list = baseList.length > 0 ? baseList : currentFilteredVillages;
       if (list.length === 0) {
         showToast('ไม่พบรายการหมู่บ้านในตัวกรอง', false);
         return;
       }
+      // ไม่รวมข้อมูลก่อนหน้านี้! ล้างอันเดิมทิ้งก่อน แล้วเพิ่มเฉพาะรายการที่กรองอยู่ในปัจจุบัน
+      selectedVillageIds.clear();
       list.forEach(v => {
         if (v['ลำดับ']) selectedVillageIds.add(String(v['ลำดับ']));
       });
@@ -7245,16 +7267,14 @@
     }
 
     function toggleSelectAllFromList(checked) {
-      const list = currentFilteredVillages.length > 0 ? currentFilteredVillages : villages;
+      const list = currentFilteredVillages.length > 0 ? currentFilteredVillages : [];
+      selectedVillageIds.clear(); // ล้างอันเดิม ไม่รวมข้อมูลก่อนหน้านี้
       if (checked) {
         list.forEach(v => {
           if (v['ลำดับ']) selectedVillageIds.add(String(v['ลำดับ']));
         });
         showToast(`เลือกทั้งหมด ${list.length} รายการ`);
       } else {
-        list.forEach(v => {
-          if (v['ลำดับ']) selectedVillageIds.delete(String(v['ลำดับ']));
-        });
         showToast('ยกเลิกการเลือกในรายการนี้');
       }
       updateSelectionUI();
@@ -7522,11 +7542,22 @@
     // --- EXCEL EXPORT HANDLER (เฉพาะที่เลือก) ---
     function exportSelectedVillagesToExcel() {
       let itemsToExport = [];
+      const baseList = getBaseFilteredVillages();
+      const currentList = baseList.length > 0 ? baseList : currentFilteredVillages;
 
       if (selectedVillageIds.size > 0) {
-        itemsToExport = villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+        // กรองเฉพาะที่เลือก และอยู่ในขอบเขตพื้นที่ปัจจุบัน ไม่รวมข้อมูลก่อนหน้านี้
+        if (currentList.length > 0) {
+          itemsToExport = currentList.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+        } else {
+          itemsToExport = villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+        }
       } else {
-        const list = currentFilteredVillages.length > 0 ? currentFilteredVillages : villages;
+        const list = currentList.length > 0 ? currentList : villages;
+        if (list.length === 0) {
+          showToast('กรุณาเลือกพื้นที่หรือติ๊กเลือกหมู่บ้านก่อนส่งออก', false);
+          return;
+        }
         const confirmExport = confirm(`ท่านยังไม่ได้ติ๊กเลือกหมู่บ้าน\n\nต้องการส่งออกข้อมูลทั้งหมดตามตัวกรองปัจจุบัน (${list.length} รายการ) หรือไม่?`);
         if (!confirmExport) return;
         itemsToExport = list;
@@ -7659,6 +7690,7 @@
           selectedTambons.clear();
           selectedTambons.add(tambon);
           activeTambon = tambon;
+          selectedVillageIds.clear(); // ล้างการเลือกเดิม ไม่รวมข้อมูลก่อนหน้านี้
           populateTambonDropdown();
           applyCurrentFiltersAndRender(true);
           switchTab('filters');
