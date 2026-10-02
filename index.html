@@ -7985,7 +7985,7 @@
       }
 
       if (isManual) {
-        showToast(`ซิงค์ข้อมูลสำเร็จ (${villages.length} หมู่บ้าน • ${timeStr})`);
+        showToast(`⚡ ซิงค์ข้อมูลล่าสุดสำเร็จ (${villages.length} หมู่บ้าน • ${timeStr}) • กรุณาเลือกพื้นที่ที่ต้องการแสดง`);
       } else if (updatedCoordsCount > 0) {
         showToast(`🔄 อัปเดตพิกัดใหม่ ${updatedCoordsCount} หมู่บ้าน (${sampleUpdatedName}) จาก Google Sheets ทันที!`);
       } else if (lastSyncTimestamp && (villages.length !== prevCount || isInitial)) {
