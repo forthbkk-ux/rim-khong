@@ -31,6 +31,10 @@
   <!-- SheetJS (xlsx) for Exporting Real Excel Files (.xlsx) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- JSZip for Exporting Real KMZ Files (.kmz) -->
+  <script src="jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <!-- Optional external data script -->
   <script src="villages-data.js"></script>
 
@@ -81,6 +85,23 @@
     }
     .custom-pulse-marker {
       filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+    }
+    .custom-pin-marker {
+      background: transparent !important;
+      border: none !important;
+    }
+    .tambon-center-label {
+      background: rgba(255, 255, 255, 0.92) !important;
+      border: 1px solid rgba(148, 163, 184, 0.6) !important;
+      border-radius: 6px !important;
+      padding: 1px 6px !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+      pointer-events: none !important;
+      font-family: 'Prompt', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 11px !important;
+      white-space: nowrap !important;
+      transition: all 0.2s ease !important;
     }
     .leaflet-popup-content-wrapper {
       border-radius: 12px;
@@ -539,9 +560,18 @@
             <button type="button" 
                     onclick="exportSelectedVillagesToExcel()" 
                     id="btn-export-excel-tab1"
-                    class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-sm hover:shadow-md transition cursor-pointer">
+                    class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white font-bold text-xs shadow-sm hover:shadow-md transition cursor-pointer border border-emerald-500/30">
               <i class="fa-solid fa-file-excel text-sm text-emerald-100"></i>
               <span>ส่งออกไฟล์ Excel (เฉพาะที่เลือก <span class="selected-count-display">0</span> แห่ง)</span>
+            </button>
+
+            <!-- Export KMZ Button (Google Earth / GIS) -->
+            <button type="button" 
+                    onclick="exportSelectedVillagesToKMZ()" 
+                    id="btn-export-kmz-tab1"
+                    class="w-full mt-1.5 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white font-bold text-xs shadow-sm hover:shadow-md transition cursor-pointer border border-blue-500/30">
+              <i class="fa-solid fa-earth-americas text-sm text-blue-100"></i>
+              <span>ส่งออกเป็น .KMZ (เฉพาะที่เลือก <span class="selected-count-display">0</span> แห่ง)</span>
             </button>
           </div>
 
@@ -584,21 +614,6 @@
               </div>
               <input type="checkbox" id="boundaries-toggle" onchange="toggleTambonBoundaries(this.checked)" checked class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
             </label>
-
-            <!-- Village Coverage Radius Selector -->
-            <div class="pt-1.5 border-t border-slate-200/60 space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="text-slate-700 font-medium">รัศมีครอบคลุมหมู่บ้าน:</span>
-                <span id="radius-val-label" class="text-[10px] font-bold text-blue-600">ปิด</span>
-              </div>
-              <div class="grid grid-cols-5 gap-1 text-[10px] text-center font-medium">
-                <button type="button" onclick="setVillageRadius(0)" id="radius-btn-0" class="py-1 rounded bg-blue-600 text-white font-bold transition">ปิด</button>
-                <button type="button" onclick="setVillageRadius(1000)" id="radius-btn-1000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">1 กม.</button>
-                <button type="button" onclick="setVillageRadius(2000)" id="radius-btn-2000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">2 กม.</button>
-                <button type="button" onclick="setVillageRadius(3000)" id="radius-btn-3000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">3 กม.</button>
-                <button type="button" onclick="setVillageRadius(5000)" id="radius-btn-5000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">5 กม.</button>
-              </div>
-            </div>
           </div>
 
           <!-- SELECTED VILLAGE DETAIL CARD -->
@@ -669,12 +684,22 @@
               <span>เลือกทั้งหมด (<span id="list-counter">แสดง 0 รายการ</span>)</span>
             </label>
             
-            <button type="button" 
-                    onclick="exportSelectedVillagesToExcel()" 
-                    class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition cursor-pointer">
-              <i class="fa-solid fa-file-excel text-emerald-100"></i>
-              <span>ส่งออก Excel (<span class="selected-count-display font-bold">0</span>)</span>
-            </button>
+            <div class="flex items-center gap-1.5">
+              <button type="button" 
+                      onclick="exportSelectedVillagesToExcel()" 
+                      class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+                      title="ส่งออกไฟล์ Excel (.xlsx)">
+                <i class="fa-solid fa-file-excel text-emerald-100"></i>
+                <span>ส่งออก Excel (<span class="selected-count-display font-bold">0</span>)</span>
+              </button>
+              <button type="button" 
+                      onclick="exportSelectedVillagesToKMZ()" 
+                      class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+                      title="ส่งออกไฟล์ .KMZ สำหรับ Google Earth / GIS">
+                <i class="fa-solid fa-earth-americas text-blue-100"></i>
+                <span>ส่งออก .KMZ (<span class="selected-count-display font-bold">0</span>)</span>
+              </button>
+            </div>
           </div>
 
           <!-- Filter Only Selected in Tab 2 -->
@@ -767,10 +792,6 @@
           <button onclick="toggleTambonBoundariesQuick()" id="quick-boundaries-btn" class="px-2.5 py-1 rounded-xl bg-blue-600 text-white transition flex items-center gap-1 shadow-xs text-xs font-semibold" title="คลิกเพื่อเปิด/ปิดแสดงขอบเขตของตำบล">
             <i class="fa-solid fa-draw-polygon text-[10px]"></i>
             <span id="quick-boundaries-text">ขอบเขต: เปิด</span>
-          </button>
-          <button onclick="cycleVillageRadiusQuick()" id="quick-radius-btn" class="px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1 shadow-xs text-xs font-semibold" title="คลิกเพื่อเปลี่ยนรัศมีครอบคลุม (ปิด / 1 กม. / 2 กม. / 3 กม. / 5 กม.)">
-            <i class="fa-solid fa-circle-notch text-[10px] text-blue-600"></i>
-            <span id="quick-radius-text">รัศมี: ปิด</span>
           </button>
         </div>
       </div>
@@ -2869,8 +2890,8 @@
         "ตำบล":  "ปะโค",
         "อำเภอ":  "เมืองหนองคาย",
         "จังหวัด":  "หนองคาย",
-        "ละติจูด (Latitude)":  "17.7491667",
-        "ลองจิจูด (Longitude)":  "102.7208333"
+        "ละติจูด (Latitude)":  "17.785527",
+        "ลองจิจูด (Longitude)":  "102.691951"
     },
     {
         "ลำดับ":  "223",
@@ -3814,8 +3835,8 @@
         "ตำบล":  "หาดคำ",
         "อำเภอ":  "เมืองหนองคาย",
         "จังหวัด":  "หนองคาย",
-        "ละติจูด (Latitude)":  "17.86425",
-        "ลองจิจูด (Longitude)":  "102.82085"
+        "ละติจูด (Latitude)":  "17.882343",
+        "ลองจิจูด (Longitude)":  "102.785152"
     },
     {
         "ลำดับ":  "328",
@@ -4723,8 +4744,8 @@
         "ตำบล":  "บ้านแพง",
         "อำเภอ":  "บ้านแพง",
         "จังหวัด":  "นครพนม",
-        "ละติจูด (Latitude)":  "17.8322558",
-        "ลองจิจูด (Longitude)":  "104.2686658"
+        "ละติจูด (Latitude)":  "17.962415",
+        "ลองจิจูด (Longitude)":  "104.221250"
     },
     {
         "ลำดับ":  "430",
@@ -4750,8 +4771,8 @@
         "ตำบล":  "บ้านแพง",
         "อำเภอ":  "บ้านแพง",
         "จังหวัด":  "นครพนม",
-        "ละติจูด (Latitude)":  "17.8322558",
-        "ลองจิจูด (Longitude)":  "104.2686658"
+        "ละติจูด (Latitude)":  "17.961250",
+        "ลองจิจูด (Longitude)":  "104.218520"
     },
     {
         "ลำดับ":  "433",
@@ -4768,8 +4789,8 @@
         "ตำบล":  "บ้านแพง",
         "อำเภอ":  "บ้านแพง",
         "จังหวัด":  "นครพนม",
-        "ละติจูด (Latitude)":  "17.8322558",
-        "ลองจิจูด (Longitude)":  "104.2686658"
+        "ละติจูด (Latitude)":  "17.963562",
+        "ลองจิจูด (Longitude)":  "104.219450"
     },
     {
         "ลำดับ":  "435",
@@ -5549,14 +5570,28 @@
     let isSyncing = false;
     let lastSyncTimestamp = null;
     
-    // Dynamic color system with vibrant high-contrast palette for all subdistricts
+    // Normalize amphoe name for clean mapping
+    function normalizeAmphoeForMatch(name) {
+      if (!name) return '';
+      return String(name).replace(/^อำเภอ/, '').replace(/^เมือง/, '').trim();
+    }
+
+    // Dynamic color system with vibrant high-contrast palette for all subdistricts (72 distinct colors)
     const TAMBON_PALETTE = [
       '#2563EB', '#DC2626', '#16A34A', '#EA580C', '#9333EA', 
       '#0D9488', '#D97706', '#DB2777', '#4F46E5', '#0891B2',
       '#059669', '#E11D48', '#7C3AED', '#CA8A04', '#0284C7',
       '#65A30D', '#C026D3', '#D946EF', '#475569', '#B45309',
       '#047857', '#1D4ED8', '#B91C1C', '#6D28D9', '#0E7490',
-      '#A21CAF', '#4338CA', '#15803D', '#C2410C', '#BE185D'
+      '#A21CAF', '#4338CA', '#15803D', '#C2410C', '#BE185D',
+      '#3B82F6', '#EF4444', '#10B981', '#F97316', '#8B5CF6',
+      '#14B8A6', '#F59E0B', '#EC4899', '#6366F1', '#06B6D4',
+      '#84CC16', '#A855F7', '#64748B', '#F43F5E', '#22C55E',
+      '#EAB308', '#38BDF8', '#FB7185', '#818CF8', '#2DD4BF',
+      '#FB923C', '#4ADE80', '#A78BFA', '#F472B6', '#0284C7',
+      '#A3E635', '#FACC15', '#C084FC', '#F87171', '#34D399',
+      '#60A5FA', '#E879F9', '#818CF8', '#059669', '#7C3AED',
+      '#D97706', '#2563EB', '#DB2777', '#16A34A', '#DC2626'
     ];
 
     const KNOWN_TAMBON_COLORS = {
@@ -5574,12 +5609,83 @@
     };
 
     const tambonColorCache = new Map();
+    let _colorAssignmentInitialized = false;
 
-    function getTambonColor(tambon) {
+    function initTambonColorAssignments() {
+      if (_colorAssignmentInitialized) return;
+      _colorAssignmentInitialized = true;
+
+      const amphoeTambonMap = new Map();
+
+      if (typeof villages !== 'undefined' && Array.isArray(villages)) {
+        villages.forEach(v => {
+          const p = v['จังหวัด'] || '';
+          const d = normalizeAmphoeForMatch(v['อำเภอ']);
+          const t = v['ตำบล'] || '';
+          if (!t) return;
+          const k = `${p}|${d}`;
+          if (!amphoeTambonMap.has(k)) amphoeTambonMap.set(k, new Set());
+          amphoeTambonMap.get(k).add(t);
+        });
+      }
+
+      if (typeof TAMBON_BOUNDARIES_GEOJSON !== 'undefined' && TAMBON_BOUNDARIES_GEOJSON.features) {
+        TAMBON_BOUNDARIES_GEOJSON.features.forEach(f => {
+          const p = f.properties.pro_th || '';
+          const d = normalizeAmphoeForMatch(f.properties.amp_th);
+          const t = f.properties.tam_th || '';
+          const altT = f.properties.alt_th || '';
+          if (!t) return;
+          const k = `${p}|${d}`;
+          if (!amphoeTambonMap.has(k)) amphoeTambonMap.set(k, new Set());
+          amphoeTambonMap.get(k).add(t);
+          if (altT) amphoeTambonMap.get(k).add(altT);
+        });
+      }
+
+      // Pre-seed known iconic colors
+      Object.entries(KNOWN_TAMBON_COLORS).forEach(([t, c]) => {
+        tambonColorCache.set(t, c);
+      });
+
+      // Distribute high-contrast colors per amphoe to ensure distinct pin/boundary colors
+      let globalPaletteOffset = 0;
+      amphoeTambonMap.forEach((tambonSet, amphoeKey) => {
+        const sortedTambons = [...tambonSet].sort((a, b) => a.localeCompare(b, 'th'));
+        sortedTambons.forEach((t, idx) => {
+          if (KNOWN_TAMBON_COLORS[t]) {
+            tambonColorCache.set(`${amphoeKey}|${t}`, KNOWN_TAMBON_COLORS[t]);
+            tambonColorCache.set(t, KNOWN_TAMBON_COLORS[t]);
+            return;
+          }
+          const colorIdx = (globalPaletteOffset + idx * 7) % TAMBON_PALETTE.length;
+          const color = TAMBON_PALETTE[colorIdx];
+          tambonColorCache.set(`${amphoeKey}|${t}`, color);
+          if (!tambonColorCache.has(t)) {
+            tambonColorCache.set(t, color);
+          }
+        });
+        globalPaletteOffset = (globalPaletteOffset + sortedTambons.length * 3 + 5) % TAMBON_PALETTE.length;
+      });
+    }
+
+    function getTambonColor(tambon, amphoe = '', changwat = '') {
       if (!tambon) return '#3b82f6';
+      initTambonColorAssignments();
+
+      const normD = normalizeAmphoeForMatch(amphoe);
+      if (changwat && normD) {
+        const fullKey = `${changwat}|${normD}|${tambon}`;
+        if (tambonColorCache.has(fullKey)) return tambonColorCache.get(fullKey);
+      } else if (normD) {
+        for (const [k, c] of tambonColorCache) {
+          if (k.endsWith(`|${normD}|${tambon}`) || k.includes(`|${normD}|${tambon}`)) return c;
+        }
+      }
+
       if (KNOWN_TAMBON_COLORS[tambon]) return KNOWN_TAMBON_COLORS[tambon];
       if (tambonColorCache.has(tambon)) return tambonColorCache.get(tambon);
-      
+
       let hash = 0;
       for (let i = 0; i < tambon.length; i++) {
         hash = (hash << 5) - hash + tambon.charCodeAt(i);
@@ -5664,12 +5770,10 @@
       'บึงกาฬ|บึงโขงหลง|ท่าดอกคำ',
       'บึงกาฬ|บึงโขงหลง|ดงบัง',
 
-      // นครพนม (26 ตำบล)
+      // นครพนม (24 ตำบล)
       'นครพนม|บ้านแพง|ไผ่ล้อม',
-      'นครพนม|บ้านแพง|นางัว',
       'นครพนม|บ้านแพง|นาเข',
       'นครพนม|บ้านแพง|บ้านแพง',
-      'นครพนม|บ้านแพง|หนองแวง',
       'นครพนม|ท่าอุเทน|พะทาย',
       'นครพนม|ท่าอุเทน|หนองเทา',
       'นครพนม|ท่าอุเทน|พนอม',
@@ -5692,6 +5796,58 @@
       'นครพนม|ธาตุพนม|ธาตุพนม',
       'นครพนม|ธาตุพนม|น้ำก่ำ'
     ]);
+
+    // Known coordinate fixes for typos in external sheet data
+    const KNOWN_COORDINATE_FIXES = {
+      '327': { lat: '17.882343', lng: '102.785152' }, // หมู่ 5 สามัคคี (ต.หาดคำ อ.เมืองหนองคาย จ.หนองคาย)
+      '222': { lat: '17.785527', lng: '102.691951' }, // หมู่ 7 หนองบ่อ (ต.ปะโค อ.เมืองหนองคาย จ.หนองคาย)
+      '429': { lat: '17.962415', lng: '104.221250' }, // หมู่ 10 แพงกลางใต้ (ต.บ้านแพง อ.บ้านแพง จ.นครพนม)
+      '432': { lat: '17.961250', lng: '104.218520' }, // หมู่ 13 แพงกลาง (ต.บ้านแพง อ.บ้านแพง จ.นครพนม)
+      '434': { lat: '17.963562', lng: '104.219450' }, // หมู่ 2 แพงกลาง (ต.บ้านแพง อ.บ้านแพง จ.นครพนม)
+      '520': { lat: '18.058402', lng: '104.149315' }, // หมู่ 1 ท่าสีไค (ต.ดงบัง อ.บึงโขงหลง จ.บึงกาฬ)
+      '577': { lat: '18.201508', lng: '104.052914' }, // หมู่ 1 โคกกว้าง (ต.โคกกว้าง อ.บุ่งคล้า จ.บึงกาฬ)
+      '769': { lat: '18.376900', lng: '103.635600' }, // หมู่ 9 นาเหนือ (ต.วิศิษฐ์ อ.เมืองบึงกาฬ จ.บึงกาฬ)
+      '693': { lat: '18.273950', lng: '103.858690' }, // หมู่ 1 ชัยพร (ต.ชัยพร อ.เมืองบึงกาฬ จ.บึงกาฬ)
+      '453': { lat: '17.897996', lng: '104.224041' }, // หมู่ 3 โคกพะทาย (ต.โพนทอง อ.บ้านแพง จ.นครพนม)
+      '782': { lat: '18.357499', lng: '103.362336' }  // หมู่ 9 สรรเสริญ (ต.หนองเลิง อ.เมืองบึงกาฬ จ.บึงกาฬ)
+    };
+
+    function sanitizeVillageCoordinates(item) {
+      if (!item) return item;
+      const id = String(item['ลำดับ'] || '').trim();
+      if (KNOWN_COORDINATE_FIXES[id]) {
+        item['ละติจูด (Latitude)'] = KNOWN_COORDINATE_FIXES[id].lat;
+        item['ลองจิจูด (Longitude)'] = KNOWN_COORDINATE_FIXES[id].lng;
+      } else if (item['หมู่บ้าน'] === 'หมู่ 5 สามัคคี' && item['ตำบล'] === 'หาดคำ') {
+        item['ละติจูด (Latitude)'] = '17.882343';
+        item['ลองจิจูด (Longitude)'] = '102.785152';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 7 หนองบ่อ' && item['ตำบล'] === 'ปะโค') {
+        item['ละติจูด (Latitude)'] = '17.785527';
+        item['ลองจิจูด (Longitude)'] = '102.691951';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 10 แพงกลางใต้' && item['ตำบล'] === 'บ้านแพง') {
+        item['ละติจูด (Latitude)'] = '17.962415';
+        item['ลองจิจูด (Longitude)'] = '104.221250';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 13 แพงกลาง' && item['ตำบล'] === 'บ้านแพง') {
+        item['ละติจูด (Latitude)'] = '17.961250';
+        item['ลองจิจูด (Longitude)'] = '104.218520';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 2 แพงกลาง' && item['ตำบล'] === 'บ้านแพง') {
+        item['ละติจูด (Latitude)'] = '17.963562';
+        item['ลองจิจูด (Longitude)'] = '104.219450';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 9 สรรเสริญ' && item['ตำบล'] === 'หนองเลิง') {
+        item['ละติจูด (Latitude)'] = '18.357499';
+        item['ลองจิจูด (Longitude)'] = '103.362336';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 1 ท่าสีไค' && item['ตำบล'] === 'ดงบัง') {
+        item['ละติจูด (Latitude)'] = '18.058402';
+        item['ลองจิจูด (Longitude)'] = '104.149315';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 1 โคกกว้าง' && item['ตำบล'] === 'โคกกว้าง') {
+        item['ละติจูด (Latitude)'] = '18.201508';
+        item['ลองจิจูด (Longitude)'] = '104.052914';
+      } else if (item['หมู่บ้าน'] === 'หมู่ 9 นาเหนือ' && item['ตำบล'] === 'วิศิษฐ์') {
+        item['ละติจูด (Latitude)'] = '18.376900';
+        item['ลองจิจูด (Longitude)'] = '103.635600';
+      }
+      return item;
+    }
 
     function isVillageOnMekong(v) {
       if (!v) return false;
@@ -5803,6 +5959,8 @@
       } else {
         villages = EMBEDDED_FALLBACK_DATA;
       }
+      villages.forEach(v => sanitizeVillageCoordinates(v));
+      initTambonColorAssignments();
 
       // Start with clean state: no pins until user selects from menus
       selectedProvinces.clear();
@@ -5966,8 +6124,8 @@
     }
 
     // --- CUSTOM SVG PINS GENERATION ---
-    function createCustomPinIcon(tambon, isSelected = false, villageName = '') {
-      const color = getTambonColor(tambon);
+    function createCustomPinIcon(tambon, isSelected = false, villageName = '', amphoe = '', changwat = '') {
+      const color = getTambonColor(tambon, amphoe, changwat);
       
       let w = 18;
       let h = 24;
@@ -6013,13 +6171,14 @@
 
     // Cached Pin Icons
     const pinIconCache = new Map();
-    function getCustomPinIconCached(tambon, isSelected = false, villageName = '') {
+    function getCustomPinIconCached(tambon, isSelected = false, villageName = '', amphoe = '', changwat = '') {
+      const color = getTambonColor(tambon, amphoe, changwat);
       const mooMatch = villageName ? villageName.match(/หมู่\s*(\d+)/) : null;
       const mooNum = mooMatch ? mooMatch[1] : '';
-      const key = `${tambon}_${pinSize}_${isSelected}_${mooNum}`;
+      const key = `${tambon}_${color}_${pinSize}_${isSelected}_${mooNum}`;
       let icon = pinIconCache.get(key);
       if (!icon) {
-        icon = createCustomPinIcon(tambon, isSelected, villageName);
+        icon = createCustomPinIcon(tambon, isSelected, villageName, amphoe, changwat);
         pinIconCache.set(key, icon);
       }
       return icon;
@@ -6034,7 +6193,7 @@
       const changwat = item['จังหวัด'] || '';
       const villageName = item['หมู่บ้าน'];
       const id = item['ลำดับ'];
-      const color = getTambonColor(tambon);
+      const color = getTambonColor(tambon, amphoe, changwat);
 
       const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${rawLatStr},${rawLngStr}`;
       const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${rawLatStr},${rawLngStr}`;
@@ -6142,8 +6301,10 @@
 
         const id = String(item['ลำดับ']);
         const tambon = item['ตำบล'];
+        const amphoe = item['อำเภอ'] || '';
+        const changwat = item['จังหวัด'] || '';
         const villageName = item['หมู่บ้าน'];
-        const color = getTambonColor(tambon);
+        const color = getTambonColor(tambon, amphoe, changwat);
 
         let marker = markersMap.get(id);
 
@@ -6152,8 +6313,10 @@
           if (Math.abs(curPos.lat - lat) > 0.00001 || Math.abs(curPos.lng - lng) > 0.00001) {
             marker.setLatLng([lat, lng]);
           }
+          const icon = getCustomPinIconCached(tambon, false, villageName, amphoe, changwat);
+          marker.setIcon(icon);
         } else {
-          const icon = getCustomPinIconCached(tambon, false, villageName);
+          const icon = getCustomPinIconCached(tambon, false, villageName, amphoe, changwat);
           marker = L.marker([lat, lng], { icon: icon });
 
           marker.bindTooltip(
@@ -6204,27 +6367,12 @@
     }
 
     // --- SUBDISTRICT BOUNDARIES & VILLAGE COVERAGE RADIUS ---
-    function normalizeAmphoeForMatch(name) {
-      if (!name) return '';
-      return String(name).replace(/^อำเภอ/, '').replace(/^เมือง/, '').trim();
-    }
-
     function renderTambonBoundaries(activeFilteredVillages) {
       if (!map || !tambonBoundaryLayerGroup) return;
       tambonBoundaryLayerGroup.clearLayers();
       if (!showTambonBoundaries) return;
 
       if (typeof TAMBON_BOUNDARIES_GEOJSON === 'undefined' || !TAMBON_BOUNDARIES_GEOJSON.features) {
-        return;
-      }
-
-      const hasProvFilter = selectedProvinces.size > 0 && selectedProvinces.size < allProvincesList.length;
-      const hasDistFilter = selectedDistricts.size > 0 && selectedDistricts.size < allDistrictsList.length;
-      const hasTambonFilter = selectedTambons.size > 0;
-      const hasAnySelection = selectedProvinces.size > 0 || selectedDistricts.size > 0 || selectedTambons.size > 0;
-
-      // ถ้ายังไม่ได้เลือกพื้นที่ ไม่ต้องเรนเดอร์ขอบเขตทั้งหมด เพื่อความเร็วและไม่หน่วง
-      if (!hasAnySelection) {
         return;
       }
 
@@ -6235,9 +6383,27 @@
         countMap.set(k, (countMap.get(k) || 0) + 1);
       });
 
-      // Supported target provinces (Nong Khai, Bueng Kan, Nakhon Phanom)
-      const targetProvs = new Set(['หนองคาย', 'บึงกาฬ', 'นครพนม']);
+      const hasProvFilter = selectedProvinces.size > 0 && selectedProvinces.size < allProvincesList.length;
+      const hasDistFilter = selectedDistricts.size > 0 && selectedDistricts.size < allDistrictsList.length;
+      const hasTambonFilter = selectedTambons.size > 0;
+      const hasVillagesFiltered = activeFilteredVillages && activeFilteredVillages.length > 0 && activeFilteredVillages.length < villages.length;
+
+      // Determine active scope of tambons from filtered villages
+      const activeTambonKeys = new Set();
+      if (hasVillagesFiltered) {
+        activeFilteredVillages.forEach(v => {
+          const p = v['จังหวัด'] || '';
+          const d = normalizeAmphoeForMatch(v['อำเภอ']);
+          const t = v['ตำบล'] || '';
+          activeTambonKeys.add(`${p}|${d}|${t}`);
+        });
+      }
+
       const allSelectedAreMekong = hasTambonFilter && [...selectedTambons].every(name => isTambonOnMekongInScope(name, villages));
+      const targetProvs = new Set(['หนองคาย', 'บึงกาฬ', 'นครพนม']);
+
+      // Filter features to draw
+      const featuresToDraw = [];
 
       TAMBON_BOUNDARIES_GEOJSON.features.forEach(feat => {
         const p = feat.properties.pro_th;
@@ -6246,33 +6412,49 @@
         const altT = feat.properties.alt_th;
         if (!targetProvs.has(p)) return;
 
-        // Check scope
+        const normD = normalizeAmphoeForMatch(d);
+
+        // 1. If villages are filtered, check if this tambon has active villages or matches explicit selection
+        if (hasVillagesFiltered) {
+          const inActiveVillages = activeTambonKeys.has(`${p}|${normD}|${t}`) || (altT && activeTambonKeys.has(`${p}|${normD}|${altT}`));
+          const inSelectedTambons = hasTambonFilter && (selectedTambons.has(t) || (altT && selectedTambons.has(altT)));
+          if (!inActiveVillages && !inSelectedTambons) return;
+        }
+
+        // 2. Province filter
         if (hasProvFilter && !selectedProvinces.has(p)) return;
 
+        // 3. District filter
         if (hasDistFilter) {
-          const normD = normalizeAmphoeForMatch(d);
           const matchesDist = [...selectedDistricts].some(sd => normalizeAmphoeForMatch(sd) === normD || sd === d);
           if (!matchesDist) return;
         }
 
-        // If specific tambons are selected:
+        // 4. Tambon filter
         if (hasTambonFilter) {
           const isSelectedTambon = selectedTambons.has(t) || (altT && selectedTambons.has(altT));
           if (!isSelectedTambon) return;
 
-          // Disambiguate tambon to make sure it belongs to the district/province in active dataset scope
-          const matchesScopeTambon = villages.some(v => 
-            (v['ตำบล'] === t || (altT && v['ตำบล'] === altT)) &&
-            v['จังหวัด'] === p &&
-            normalizeAmphoeForMatch(v['อำเภอ']) === normalizeAmphoeForMatch(d)
-          );
-          if (!matchesScopeTambon) return;
-
-          // Mekong River disambiguation
+          // Mekong filter disambiguation
           if (allSelectedAreMekong && !isTambonMekongMatch(p, d, t, altT)) return;
         }
 
+        featuresToDraw.push(feat);
+      });
+
+      const isHighlight = hasVillagesFiltered || hasTambonFilter || hasDistFilter;
+      const fillOpacity = isHighlight ? 0.30 : 0.20;
+      const strokeOpacity = isHighlight ? 0.95 : 0.85;
+      const weight = isHighlight ? 2.5 : 1.6;
+      const showCenterBadges = featuresToDraw.length <= 40;
+
+      featuresToDraw.forEach(feat => {
+        const p = feat.properties.pro_th;
+        const d = feat.properties.amp_th;
+        const t = feat.properties.tam_th;
+        const altT = feat.properties.alt_th;
         const normD = normalizeAmphoeForMatch(d);
+
         let vCount = countMap.get(`${p}|${normD}|${t}`) || 0;
         if (altT) {
           vCount += countMap.get(`${p}|${normD}|${altT}`) || 0;
@@ -6289,14 +6471,9 @@
           }
         }
 
-        const color = getTambonColor(displayTambonName);
+        const color = getTambonColor(displayTambonName, d, p);
         const isMekong = isTambonMekongMatch(p, d, t, altT);
         const area = feat.properties.area_sqkm;
-
-        const isHighlight = hasTambonFilter || hasDistFilter;
-        const fillOpacity = isHighlight ? 0.32 : 0.16;
-        const strokeOpacity = isHighlight ? 0.9 : 0.7;
-        const weight = isHighlight ? 2.5 : 1.5;
 
         const layer = L.geoJSON(feat, {
           pane: 'boundaryPane',
@@ -6318,7 +6495,7 @@
             l.setStyle({
               weight: 3.5,
               color: '#0f172a',
-              fillOpacity: Math.min(0.6, fillOpacity + 0.22)
+              fillOpacity: Math.min(0.60, fillOpacity + 0.22)
             });
           },
           mouseout: function(e) {
@@ -6332,38 +6509,52 @@
         });
 
         const tooltipContent = `
-          <div class="px-2 py-1 font-sans text-xs select-none">
+          <div class="px-2.5 py-1.5 font-sans select-none text-xs">
             <div class="font-bold flex items-center gap-1.5" style="color: ${color}">
               <i class="fa-solid fa-landmark text-[10px]"></i>
-              <span>ต.${displayTambonName}</span>
+              <span>ตำบล${displayTambonName}</span>
               ${isMekong ? '<span class="text-[9px] bg-cyan-100 text-cyan-800 px-1.5 py-0.2 rounded-full font-semibold border border-cyan-200">🌊 ริมโขง</span>' : ''}
             </div>
-            <div class="text-[11px] text-slate-600 mt-0.5">อ.${d} จ.${p}</div>
+            <div class="text-[11px] text-slate-600 mt-0.5">อำเภอ${d} จังหวัด${p}</div>
             <div class="flex items-center gap-2 mt-1 text-[10px] text-slate-500 border-t border-slate-100 pt-1">
               <span>📍 <b>${vCount}</b> หมู่บ้าน</span>
               ${area ? `<span>📐 ${parseFloat(area).toFixed(1)} ตร.กม.</span>` : ''}
             </div>
           </div>
         `;
-        layer.bindTooltip(tooltipContent, {
-          sticky: true,
-          direction: 'top',
-          className: 'shadow-lg border border-slate-200 rounded-xl'
-        });
+
+        if (showCenterBadges) {
+          layer.bindTooltip(`
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${color};"></span>
+              <span>ต.${displayTambonName}</span>
+            </div>
+          `, {
+            permanent: true,
+            direction: 'center',
+            className: 'tambon-center-label'
+          });
+        } else {
+          layer.bindTooltip(tooltipContent, {
+            sticky: true,
+            direction: 'top',
+            className: 'shadow-lg border border-slate-200 rounded-xl'
+          });
+        }
 
         const popupContent = `
-          <div style="font-family:'Prompt',sans-serif; padding:4px 2px; min-width: 175px;">
+          <div style="font-family:'Prompt',sans-serif; padding:4px 2px; min-width: 180px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
               <b style="font-size:14px; color:${color};">ต.${displayTambonName}</b>
               ${isMekong ? '<span style="font-size:10px; background:#cffafe; color:#0e7490; padding:2px 6px; border-radius:12px; font-weight:bold;">🌊 ริมโขง</span>' : ''}
             </div>
-            <div style="font-size:12px; color:#475569; margin-top:2px;">อ.${d} จ.${p}</div>
+            <div style="font-size:12px; color:#475569; margin-top:2px;">อำเภอ${d} จังหวัด${p}</div>
             <div style="font-size:11px; color:#64748b; margin-top:6px; border-top:1px solid #e2e8f0; padding-top:6px; display:flex; justify-content:space-between;">
               <span>📍 <b>${vCount}</b> หมู่บ้าน</span>
               ${area ? `<span>📐 <b>${parseFloat(area).toFixed(1)}</b> ตร.กม.</span>` : ''}
             </div>
             <button onclick="selectSingleTambonFromMap('${displayTambonName}', '${d}', '${p}')" 
-                    style="width:100%; margin-top:8px; padding:5px 8px; background:#2563eb; color:white; border-radius:8px; font-size:11px; font-weight:bold; border:none; cursor:pointer;">
+                    style="width:100%; margin-top:8px; padding:6px 8px; background:${color}; color:white; border-radius:8px; font-size:11px; font-weight:bold; border:none; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
               🎯 กรองดูเฉพาะตำบลนี้
             </button>
           </div>
@@ -6418,6 +6609,7 @@
       }
 
       renderTambonBoundaries(currentFilteredVillages);
+      showToast(showTambonBoundaries ? '🗺️ แสดงขอบเขตตำบล' : 'ซ่อนขอบเขตตำบล');
     }
 
     function toggleTambonBoundariesQuick() {
@@ -8194,6 +8386,415 @@
       }
     }
 
+    // --- KMZ / KML EXPORT HANDLER (เฉพาะที่เลือก) ---
+    async function exportSelectedVillagesToKMZ() {
+      let itemsToExport = [];
+      const baseList = getBaseFilteredVillages();
+      const currentList = baseList.length > 0 ? baseList : currentFilteredVillages;
+
+      if (selectedVillageIds.size > 0) {
+        // กรองเฉพาะที่เลือก และอยู่ในขอบเขตพื้นที่ปัจจุบัน
+        if (currentList.length > 0) {
+          itemsToExport = currentList.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+        } else {
+          itemsToExport = villages.filter(v => selectedVillageIds.has(String(v['ลำดับ'])));
+        }
+      } else {
+        const list = currentList.length > 0 ? currentList : villages;
+        if (list.length === 0) {
+          showToast('กรุณาเลือกพื้นที่หรือติ๊กเลือกหมู่บ้านก่อนส่งออก .KMZ', false);
+          return;
+        }
+        const confirmExport = confirm(`ท่านยังไม่ได้ติ๊กเลือกหมู่บ้าน\n\nต้องการส่งออกไฟล์ .KMZ ทั้งหมดตามตัวกรองปัจจุบัน (${list.length} รายการ) หรือไม่?`);
+        if (!confirmExport) return;
+        itemsToExport = list;
+      }
+
+      // คัดกรองเฉพาะแถวที่มีพิกัดถูกต้อง
+      const validItems = itemsToExport.filter(v => {
+        const lat = parseFloat(v['ละติจูด (Latitude)']);
+        const lng = parseFloat(v['ลองจิจูด (Longitude)']);
+        return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+      });
+
+      if (validItems.length === 0) {
+        showToast('ไม่พบข้อมูลที่มีพิกัดถูกต้องสำหรับสร้างไฟล์ .KMZ', false);
+        return;
+      }
+
+      showToast(`กำลังสร้างไฟล์ .KMZ (${validItems.length} รายการ)...`);
+
+      // ชื่อไฟล์
+      const today = new Date();
+      const dateStr = today.toISOString().slice(0, 10);
+      let scopeName = 'พิกัดหมู่บ้าน';
+      if (activeProvince) scopeName += `_จ.${activeProvince}`;
+      if (activeDistrict) scopeName += `_อ.${activeDistrict}`;
+      if (activeTambon) scopeName += `_ต.${activeTambon}`;
+      const baseFileName = `${scopeName}_${validItems.length}รายการ_${dateStr}`;
+
+      // สร้างเนื้อหา KML
+      const kmlContent = generateKMLContent(validItems, baseFileName);
+
+      // สร้างไฟล์บีบอัด .KMZ ผ่าน JSZip
+      if (typeof JSZip !== 'undefined') {
+        try {
+          const zip = new JSZip();
+          zip.file("doc.kml", kmlContent);
+          const kmzBlob = await zip.generateAsync({
+            type: "blob",
+            mimeType: "application/vnd.google-earth.kmz",
+            compression: "DEFLATE",
+            compressionOptions: { level: 9 }
+          });
+
+          const url = URL.createObjectURL(kmzBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${baseFileName}.kmz`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          showToast(`ส่งออกไฟล์ .KMZ สำเร็จ (${validItems.length} รายการ)!`);
+          return;
+        } catch (err) {
+          console.error("KMZ zip generation failed, falling back to KML:", err);
+        }
+      }
+
+      // แผนสำรอง: ส่งออกเป็น .KML (เปิดใน Google Earth / GIS ได้เหมือนกัน)
+      try {
+        const kmlBlob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+        const url = URL.createObjectURL(kmlBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${baseFileName}.kml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast(`ส่งออกไฟล์ .KML สำเร็จ (${validItems.length} รายการ)!`);
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์: " + e.message);
+      }
+    }
+
+    // Helper ค้นหารูปหลายเหลี่ยมขอบเขตตำบลจาก TAMBON_BOUNDARIES_GEOJSON
+    function findTambonBoundaryFeature(tambon, amphoe = '', changwat = '') {
+      if (typeof TAMBON_BOUNDARIES_GEOJSON === 'undefined' || !TAMBON_BOUNDARIES_GEOJSON.features) {
+        return null;
+      }
+      const normAmp = normalizeAmphoeForMatch(amphoe);
+
+      // 1. ค้นหาตรงทั้ง จังหวัด อำเภอ และ ตำบล (หรือ alt_th)
+      let found = TAMBON_BOUNDARIES_GEOJSON.features.find(f => {
+        const fp = f.properties.pro_th;
+        const fa = normalizeAmphoeForMatch(f.properties.amp_th);
+        const ft = f.properties.tam_th;
+        const falt = f.properties.alt_th;
+        const pMatch = !changwat || fp === changwat;
+        const aMatch = !normAmp || fa === normAmp;
+        const tMatch = ft === tambon || falt === tambon;
+        return pMatch && aMatch && tMatch;
+      });
+      if (found) return found;
+
+      // 2. ค้นหาด้วย อำเภอ และ ตำบล
+      if (normAmp) {
+        found = TAMBON_BOUNDARIES_GEOJSON.features.find(f => {
+          const fa = normalizeAmphoeForMatch(f.properties.amp_th);
+          const ft = f.properties.tam_th;
+          const falt = f.properties.alt_th;
+          return fa === normAmp && (ft === tambon || falt === tambon);
+        });
+        if (found) return found;
+      }
+
+      // 3. ค้นหาด้วย จังหวัด และ ตำบล
+      if (changwat) {
+        found = TAMBON_BOUNDARIES_GEOJSON.features.find(f => {
+          const fp = f.properties.pro_th;
+          const ft = f.properties.tam_th;
+          const falt = f.properties.alt_th;
+          return fp === changwat && (ft === tambon || falt === tambon);
+        });
+        if (found) return found;
+      }
+
+      // 4. สำรอง: ค้นหาด้วยชื่อตำบล
+      return TAMBON_BOUNDARIES_GEOJSON.features.find(f => {
+        return f.properties.tam_th === tambon || f.properties.alt_th === tambon;
+      }) || null;
+    }
+
+    // Helper แปลง GeoJSON Polygon / MultiPolygon เป็น KML XML Geometry
+    function geoJsonGeometryToKml(geometry) {
+      if (!geometry || !geometry.coordinates) return '';
+
+      function formatRing(ring) {
+        return ring.map(pt => `${pt[0]},${pt[1]},0`).join(' ');
+      }
+
+      function polygonKml(rings) {
+        if (!rings || rings.length === 0) return '';
+        let xml = '          <Polygon>\n            <extrude>0</extrude>\n            <altitudeMode>clampToGround</altitudeMode>\n';
+        xml += `            <outerBoundaryIs><LinearRing><coordinates>${formatRing(rings[0])}</coordinates></LinearRing></outerBoundaryIs>\n`;
+        for (let i = 1; i < rings.length; i++) {
+          xml += `            <innerBoundaryIs><LinearRing><coordinates>${formatRing(rings[i])}</coordinates></LinearRing></innerBoundaryIs>\n`;
+        }
+        xml += '          </Polygon>\n';
+        return xml;
+      }
+
+      if (geometry.type === 'Polygon') {
+        return polygonKml(geometry.coordinates);
+      } else if (geometry.type === 'MultiPolygon') {
+        let xml = '        <MultiGeometry>\n';
+        geometry.coordinates.forEach(polyRings => {
+          xml += polygonKml(polyRings);
+        });
+        xml += '        </MultiGeometry>\n';
+        return xml;
+      }
+      return '';
+    }
+
+    // Helper แปลงสี Hex (#RRGGBB) เป็นรูปแบบสี KML (AABBGGRR)
+    function hexToKmlColor(hex, alpha = 'ff') {
+      if (!hex) return `${alpha}ffffff`;
+      let c = String(hex).replace('#', '').trim();
+      if (c.length === 3) {
+        c = c.split('').map(x => x + x).join('');
+      }
+      if (c.length !== 6) return `${alpha}ffffff`;
+      const r = c.substring(0, 2);
+      const g = c.substring(2, 4);
+      const b = c.substring(4, 6);
+      return `${alpha}${b}${g}${r}`.toLowerCase();
+    }
+
+    // Helper สร้างโครงสร้าง KML ตามมาตรฐาน OGC KML 2.2 พร้อมขอบเขตตำบลและแยกสีหมุดตามตำบล
+    function generateKMLContent(items, docName) {
+      function escapeXml(unsafe) {
+        if (!unsafe) return '';
+        return String(unsafe).replace(/[<>&'"]/g, c => {
+          switch (c) {
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '&': return '&amp;';
+            case '\'': return '&apos;';
+            case '"': return '&quot;';
+          }
+        });
+      }
+
+      // จัดกลุ่มข้อมูลแบบลำดับขั้น: จังหวัด -> อำเภอ -> ตำบล
+      const hierarchy = {};
+      const uniqueTambons = new Map();
+      let styleIdx = 0;
+
+      items.forEach((v, idx) => {
+        const pro = v['จังหวัด'] || 'ไม่ระบุจังหวัด';
+        const amp = v['อำเภอ'] || 'ไม่ระบุอำเภอ';
+        const tam = v['ตำบล'] || 'ไม่ระบุตำบล';
+        if (!hierarchy[pro]) hierarchy[pro] = {};
+        if (!hierarchy[pro][amp]) hierarchy[pro][amp] = {};
+        if (!hierarchy[pro][amp][tam]) hierarchy[pro][amp][tam] = [];
+        hierarchy[pro][amp][tam].push({ v, idx: idx + 1 });
+
+        const tamKey = `${pro}|${amp}|${tam}`;
+        if (!uniqueTambons.has(tamKey)) {
+          styleIdx++;
+          const color = getTambonColor(tam, amp, pro);
+          const feat = findTambonBoundaryFeature(tam, amp, pro);
+          uniqueTambons.set(tamKey, {
+            pro,
+            amp,
+            tam,
+            color,
+            feature: feat,
+            styleKey: `tam_${styleIdx}`,
+            items: []
+          });
+        }
+        uniqueTambons.get(tamKey).items.push({ v, idx: idx + 1 });
+      });
+
+      // สร้าง Style นิยามสีหมุดและสีขอบเขตของแต่ละตำบล
+      let stylesXml = `    <Style id="pin_default">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/paddle/red-circle.png</href>
+        </Icon>
+        <hotSpot x="32" y="1" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0.85</scale>
+      </LabelStyle>
+    </Style>\n`;
+
+      uniqueTambons.forEach((info) => {
+        const pinColorKml = hexToKmlColor(info.color, 'ff');
+        const polyLineColorKml = hexToKmlColor(info.color, 'ff');
+        const polyFillColorKml = hexToKmlColor(info.color, '44'); // ~27% โปร่งแสงสำหรับพื้นผิว
+
+        stylesXml += `    <Style id="pin_${info.styleKey}">
+      <IconStyle>
+        <color>${pinColorKml}</color>
+        <scale>1.1</scale>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/paddle/wht-circle.png</href>
+        </Icon>
+        <hotSpot x="32" y="1" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0.85</scale>
+      </LabelStyle>
+      <BalloonStyle>
+        <text><![CDATA[$[description]]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="poly_${info.styleKey}">
+      <LineStyle>
+        <color>${polyLineColorKml}</color>
+        <width>2.5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>${polyFillColorKml}</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+      <BalloonStyle>
+        <text><![CDATA[$[description]]]></text>
+      </BalloonStyle>
+    </Style>\n`;
+      });
+
+      // สร้าง Folder ขอบเขตตำบล (Subdistrict Boundaries)
+      let boundaryCount = 0;
+      let boundariesFolderXml = '';
+      for (const pro of Object.keys(hierarchy)) {
+        let proBoundariesXml = '';
+        for (const amp of Object.keys(hierarchy[pro])) {
+          let ampBoundariesXml = '';
+          for (const tam of Object.keys(hierarchy[pro][amp])) {
+            const tamKey = `${pro}|${amp}|${tam}`;
+            const info = uniqueTambons.get(tamKey);
+            if (info && info.feature && info.feature.geometry) {
+              const geomKml = geoJsonGeometryToKml(info.feature.geometry);
+              if (geomKml) {
+                boundaryCount++;
+                const area = info.feature.properties && info.feature.properties.area_sqkm;
+                const areaRow = area ? `<tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>พื้นที่:</b></td><td style="color: #0f172a;">${parseFloat(area).toFixed(1)} ตร.กม.</td></tr>` : '';
+                ampBoundariesXml += `        <Placemark>
+          <name>${escapeXml('ตำบล' + tam)}</name>
+          <description><![CDATA[
+            <div style="font-family: Arial, sans-serif; font-size: 13px; line-height: 1.5; padding: 6px; min-width: 220px;">
+              <h3 style="margin: 0 0 8px 0; color: ${info.color}; border-bottom: 2px solid ${info.color}; padding-bottom: 4px;">ตำบล${escapeXml(tam)}</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <tr><td style="color: #64748b; padding: 3px 6px 3px 0; width: 85px;"><b>อำเภอ:</b></td><td style="color: #0f172a;">${escapeXml(amp)}</td></tr>
+                <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>จังหวัด:</b></td><td style="color: #0f172a;">${escapeXml(pro)}</td></tr>
+                <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>หมู่บ้านในไฟล์:</b></td><td style="color: #0f172a; font-weight: bold;">${info.items.length} แห่ง</td></tr>
+                ${areaRow}
+              </table>
+            </div>
+          ]]></description>
+          <styleUrl>#poly_${info.styleKey}</styleUrl>
+${geomKml}        </Placemark>\n`;
+              }
+            }
+          }
+          if (ampBoundariesXml) {
+            proBoundariesXml += `      <Folder>\n        <name>${escapeXml('อำเภอ' + amp)}</name>\n        <open>1</open>\n${ampBoundariesXml}      </Folder>\n`;
+          }
+        }
+        if (proBoundariesXml) {
+          boundariesFolderXml += `    <Folder>\n      <name>${escapeXml('จังหวัด' + pro)}</name>\n      <open>1</open>\n${proBoundariesXml}    </Folder>\n`;
+        }
+      }
+
+      // สร้าง Folder หมุดพิกัดหมู่บ้าน (Village Pins)
+      let villagesFolderXml = '';
+      for (const pro of Object.keys(hierarchy)) {
+        villagesFolderXml += `    <Folder>\n      <name>${escapeXml('จังหวัด' + pro)}</name>\n      <open>1</open>\n`;
+        for (const amp of Object.keys(hierarchy[pro])) {
+          villagesFolderXml += `      <Folder>\n        <name>${escapeXml('อำเภอ' + amp)}</name>\n        <open>1</open>\n`;
+          for (const tam of Object.keys(hierarchy[pro][amp])) {
+            const tamKey = `${pro}|${amp}|${tam}`;
+            const info = uniqueTambons.get(tamKey);
+            const styleKey = info ? info.styleKey : 'default';
+            const color = info ? info.color : '#2563eb';
+            const villList = hierarchy[pro][amp][tam];
+
+            villagesFolderXml += `        <Folder>\n          <name>${escapeXml('ตำบล' + tam + ' (' + villList.length + ' แห่ง)')}</name>\n          <open>0</open>\n`;
+            for (const item of villList) {
+              const v = item.v;
+              const lat = parseFloat(v['ละติจูด (Latitude)']);
+              const lng = parseFloat(v['ลองจิจูด (Longitude)']);
+              const name = v['หมู่บ้าน'] || `หมู่บ้านลำดับ ${item.idx}`;
+              const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+              const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+              villagesFolderXml += `          <Placemark>
+            <name>${escapeXml(name)}</name>
+            <description><![CDATA[
+              <div style="font-family: Arial, sans-serif; font-size: 13px; line-height: 1.5; padding: 6px; min-width: 240px;">
+                <h3 style="margin: 0 0 8px 0; color: ${color}; border-bottom: 2px solid ${color}; padding-bottom: 4px;">${escapeXml(name)}</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0; width: 75px;"><b>ลำดับ:</b></td><td style="color: #0f172a; font-weight: bold;">${escapeXml(v['ลำดับ'] || item.idx)}</td></tr>
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>ตำบล:</b></td><td style="color: #0f172a;">${escapeXml(v['ตำบล'] || '')}</td></tr>
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>อำเภอ:</b></td><td style="color: #0f172a;">${escapeXml(v['อำเภอ'] || '')}</td></tr>
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>จังหวัด:</b></td><td style="color: #0f172a;">${escapeXml(v['จังหวัด'] || '')}</td></tr>
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>ละติจูด:</b></td><td style="color: #0f172a; font-family: monospace;">${lat}</td></tr>
+                  <tr><td style="color: #64748b; padding: 3px 6px 3px 0;"><b>ลองจิจูด:</b></td><td style="color: #0f172a; font-family: monospace;">${lng}</td></tr>
+                </table>
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                  <a href="${gmapsUrl}" target="_blank" style="display: inline-block; padding: 5px 10px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold;">เปิด Google Maps</a>
+                  <a href="${dirUrl}" target="_blank" style="display: inline-block; padding: 5px 10px; background: #059669; color: #fff; text-decoration: none; border-radius: 4px; font-size: 11px; font-weight: bold;">เส้นทางนำทาง</a>
+                </div>
+              </div>
+            ]]></description>
+            <styleUrl>#pin_${styleKey}</styleUrl>
+            <Point>
+              <coordinates>${lng},${lat},0</coordinates>
+            </Point>
+          </Placemark>\n`;
+            }
+            villagesFolderXml += `        </Folder>\n`;
+          }
+          villagesFolderXml += `      </Folder>\n`;
+        }
+        villagesFolderXml += `    </Folder>\n`;
+      }
+
+      // Root Document ประกอบด้วยขอบเขตตำบลและหมุดพิกัดหมู่บ้าน
+      let kmlDocument = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${escapeXml(docName)}</name>
+    <open>1</open>
+${stylesXml}`;
+
+      if (boundariesFolderXml) {
+        kmlDocument += `    <Folder>
+      <name>🗺️ ขอบเขตตำบล (${boundaryCount} ตำบล)</name>
+      <open>1</open>
+${boundariesFolderXml}    </Folder>\n`;
+      }
+
+      kmlDocument += `    <Folder>
+      <name>📍 หมุดพิกัดหมู่บ้าน (${items.length} แห่ง)</name>
+      <open>1</open>
+${villagesFolderXml}    </Folder>
+  </Document>
+</kml>`;
+
+      return kmlDocument;
+    }
+
     // --- TAMBON COLOR LEGEND (TAB 3) ---
     function renderTambonLegend() {
       const container = document.getElementById('tambon-legend-container');
@@ -8215,8 +8816,8 @@
       const tambons = [...new Set(list.map(v => v['ตำบล']).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
 
       tambons.forEach(tambon => {
-        const count = list.filter(v => v['ตำบล'] === tambon).length;
-        const color = getTambonColor(tambon);
+        const sampleV = list.find(v => v['ตำบล'] === tambon);
+        const color = getTambonColor(tambon, sampleV ? sampleV['อำเภอ'] : activeDistrict, sampleV ? sampleV['จังหวัด'] : activeProvince);
 
         const card = document.createElement('div');
         card.id = `legend-card-${tambon}`;
@@ -8418,6 +9019,9 @@
     };
 
     function applyNewVillagesData(newVillages, isInitial = false, isManual = false) {
+      if (Array.isArray(newVillages)) {
+        newVillages.forEach(nv => sanitizeVillageCoordinates(nv));
+      }
       const prevCount = villages.length;
       const prevVillagesMap = new Map();
       villages.forEach(v => {
@@ -8513,6 +9117,8 @@
       }
 
       updateTotalCountBadges(villages.length);
+      _colorAssignmentInitialized = false;
+      initTambonColorAssignments();
 
       // Refresh cascading dropdowns and view while preserving active user filters
       populateProvinceDropdown();
