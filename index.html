@@ -34,6 +34,9 @@
   <!-- Optional external data script -->
   <script src="villages-data.js"></script>
 
+  <!-- Subdistrict Boundaries GeoJSON -->
+  <script src="tambon-boundaries.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -572,6 +575,30 @@
               <span class="text-slate-700 font-medium">แสดงป้ายชื่อหมู่บ้านบนแผนที่</span>
               <input type="checkbox" id="labels-toggle" onchange="toggleMarkerLabels(this.checked)" checked class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
             </label>
+
+            <!-- Show Tambon Boundaries -->
+            <label class="flex items-center justify-between cursor-pointer pt-1 border-t border-slate-200/60">
+              <div>
+                <span class="text-slate-700 font-medium block">แสดงขอบเขตของตำบล</span>
+                <span class="text-[10px] text-slate-400">รูปหลายเหลี่ยมตามเขตการปกครองจริง</span>
+              </div>
+              <input type="checkbox" id="boundaries-toggle" onchange="toggleTambonBoundaries(this.checked)" checked class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+            </label>
+
+            <!-- Village Coverage Radius Selector -->
+            <div class="pt-1.5 border-t border-slate-200/60 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-700 font-medium">รัศมีครอบคลุมหมู่บ้าน:</span>
+                <span id="radius-val-label" class="text-[10px] font-bold text-blue-600">ปิด</span>
+              </div>
+              <div class="grid grid-cols-5 gap-1 text-[10px] text-center font-medium">
+                <button type="button" onclick="setVillageRadius(0)" id="radius-btn-0" class="py-1 rounded bg-blue-600 text-white font-bold transition">ปิด</button>
+                <button type="button" onclick="setVillageRadius(1000)" id="radius-btn-1000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">1 กม.</button>
+                <button type="button" onclick="setVillageRadius(2000)" id="radius-btn-2000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">2 กม.</button>
+                <button type="button" onclick="setVillageRadius(3000)" id="radius-btn-3000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">3 กม.</button>
+                <button type="button" onclick="setVillageRadius(5000)" id="radius-btn-5000" class="py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition">5 กม.</button>
+              </div>
+            </div>
           </div>
 
           <!-- SELECTED VILLAGE DETAIL CARD -->
@@ -735,6 +762,15 @@
           <button onclick="toggleFilterOnlySelectedQuick()" id="quick-only-selected-btn" class="px-2.5 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 transition flex items-center gap-1 shadow-xs text-xs font-semibold" title="คลิกเพื่อสลับแสดงเฉพาะหมู่บ้านที่ติ๊กเลือก">
             <i class="fa-solid fa-filter text-[10px] text-blue-600"></i>
             <span id="quick-only-selected-text">เฉพาะที่เลือก (<span class="selected-count-display font-bold">0</span>)</span>
+          </button>
+          <div class="h-4 w-px bg-slate-300 mx-0.5"></div>
+          <button onclick="toggleTambonBoundariesQuick()" id="quick-boundaries-btn" class="px-2.5 py-1 rounded-xl bg-blue-600 text-white transition flex items-center gap-1 shadow-xs text-xs font-semibold" title="คลิกเพื่อเปิด/ปิดแสดงขอบเขตของตำบล">
+            <i class="fa-solid fa-draw-polygon text-[10px]"></i>
+            <span id="quick-boundaries-text">ขอบเขต: เปิด</span>
+          </button>
+          <button onclick="cycleVillageRadiusQuick()" id="quick-radius-btn" class="px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1 shadow-xs text-xs font-semibold" title="คลิกเพื่อเปลี่ยนรัศมีครอบคลุม (ปิด / 1 กม. / 2 กม. / 3 กม. / 5 กม.)">
+            <i class="fa-solid fa-circle-notch text-[10px] text-blue-600"></i>
+            <span id="quick-radius-text">รัศมี: ปิด</span>
           </button>
         </div>
       </div>
@@ -5564,6 +5600,11 @@
     let useClustering = false; // Default: show all village pins independently
     let pinSize = 'small';     // 'small' (18px) | 'medium' (24px) | 'large' (32px)
     let showLabels = true;
+    let showTambonBoundaries = true;
+    let showVillageRadius = false;
+    let villageRadiusMeters = 0;
+    let tambonBoundaryLayerGroup = null;
+    let villageRadiusLayerGroup = null;
 
     // Multi-select state for Dropdowns 1 (Province), 2 (District), 3 (Tambon)
     const selectedProvinces = new Set();
@@ -5846,6 +5887,20 @@
         }
       });
 
+      // Panes for subdistrict boundaries and coverage radiuses
+      if (!map.getPane('boundaryPane')) {
+        map.createPane('boundaryPane');
+        map.getPane('boundaryPane').style.zIndex = '350';
+      }
+      if (!map.getPane('radiusPane')) {
+        map.createPane('radiusPane');
+        map.getPane('radiusPane').style.zIndex = '380';
+        map.getPane('radiusPane').style.pointerEvents = 'none';
+      }
+
+      tambonBoundaryLayerGroup = L.layerGroup().addTo(map);
+      villageRadiusLayerGroup = L.layerGroup().addTo(map);
+
       singleMarkersLayer = L.layerGroup();
 
       if (useClustering) {
@@ -5855,6 +5910,8 @@
       }
 
       renderMarkersOnMap(currentFilteredVillages);
+      renderTambonBoundaries(currentFilteredVillages);
+      renderVillageRadiuses(currentFilteredVillages);
     }
 
     // Set Base Layer (Hybrid / Road / Terrain / OSM)
@@ -6121,6 +6178,252 @@
           marker.setVisible(allowedIds.has(String(id)));
         });
       }
+    }
+
+    // --- SUBDISTRICT BOUNDARIES & VILLAGE COVERAGE RADIUS ---
+    function normalizeAmphoeForMatch(name) {
+      if (!name) return '';
+      return String(name).replace(/^อำเภอ/, '').replace(/^เมือง/, '').trim();
+    }
+
+    function renderTambonBoundaries(activeFilteredVillages) {
+      if (!map || !tambonBoundaryLayerGroup) return;
+      tambonBoundaryLayerGroup.clearLayers();
+      if (!showTambonBoundaries) return;
+
+      if (typeof TAMBON_BOUNDARIES_GEOJSON === 'undefined' || !TAMBON_BOUNDARIES_GEOJSON.features) {
+        return;
+      }
+
+      // Pre-calculate count of villages in each tambon
+      const countMap = new Map();
+      villages.forEach(v => {
+        const k = `${v['จังหวัด']}|${v['อำเภอ']}|${v['ตำบล']}`;
+        countMap.set(k, (countMap.get(k) || 0) + 1);
+      });
+
+      const hasProvFilter = selectedProvinces.size > 0 && selectedProvinces.size < allProvincesList.length;
+      const hasDistFilter = selectedDistricts.size > 0 && selectedDistricts.size < allDistrictsList.length;
+      const hasTambonFilter = selectedTambons.size > 0;
+
+      // Supported target provinces (Nong Khai, Bueng Kan, Nakhon Phanom)
+      const targetProvs = new Set(['หนองคาย', 'บึงกาฬ', 'นครพนม']);
+
+      TAMBON_BOUNDARIES_GEOJSON.features.forEach(feat => {
+        const p = feat.properties.pro_th;
+        const d = feat.properties.amp_th;
+        const t = feat.properties.tam_th;
+        if (!targetProvs.has(p)) return;
+
+        // Check scope
+        if (hasProvFilter && !selectedProvinces.has(p)) return;
+
+        if (hasDistFilter) {
+          const normD = normalizeAmphoeForMatch(d);
+          const matchesDist = [...selectedDistricts].some(sd => normalizeAmphoeForMatch(sd) === normD || sd === d);
+          if (!matchesDist) return;
+        }
+
+        // If specific tambons are selected:
+        if (hasTambonFilter) {
+          if (!selectedTambons.has(t)) return;
+          // Mekong River disambiguation
+          const allSelectedAreMekong = [...selectedTambons].every(name => isTambonOnMekongInScope(name, villages));
+          if (allSelectedAreMekong && !MEKONG_TAMBON_KEYS.has(`${p}|${d}|${t}`)) return;
+        }
+
+        const color = getTambonColor(t);
+        const k = `${p}|${d}|${t}`;
+        const vCount = countMap.get(k) || 0;
+        const isMekong = MEKONG_TAMBON_KEYS.has(k);
+        const area = feat.properties.area_sqkm;
+
+        const isHighlight = hasTambonFilter || hasDistFilter;
+        const fillOpacity = isHighlight ? 0.32 : 0.16;
+        const strokeOpacity = isHighlight ? 0.9 : 0.7;
+        const weight = isHighlight ? 2.5 : 1.5;
+
+        const layer = L.geoJSON(feat, {
+          pane: 'boundaryPane',
+          style: {
+            color: color,
+            weight: weight,
+            opacity: strokeOpacity,
+            fillColor: color,
+            fillOpacity: fillOpacity,
+            lineJoin: 'round',
+            lineCap: 'round'
+          }
+        });
+
+        // Hover & click events
+        layer.on({
+          mouseover: function(e) {
+            const l = e.target;
+            l.setStyle({
+              weight: 3.5,
+              color: '#0f172a',
+              fillOpacity: Math.min(0.6, fillOpacity + 0.22)
+            });
+          },
+          mouseout: function(e) {
+            layer.resetStyle(e.target);
+          },
+          click: function(e) {
+            if (layer.getBounds().isValid()) {
+              map.fitBounds(layer.getBounds(), { padding: [30, 30] });
+            }
+          }
+        });
+
+        const tooltipContent = `
+          <div class="px-2 py-1 font-sans text-xs select-none">
+            <div class="font-bold flex items-center gap-1.5" style="color: ${color}">
+              <i class="fa-solid fa-landmark text-[10px]"></i>
+              <span>ต.${t}</span>
+              ${isMekong ? '<span class="text-[9px] bg-cyan-100 text-cyan-800 px-1.5 py-0.2 rounded-full font-semibold border border-cyan-200">🌊 ริมโขง</span>' : ''}
+            </div>
+            <div class="text-[11px] text-slate-600 mt-0.5">อ.${d} จ.${p}</div>
+            <div class="flex items-center gap-2 mt-1 text-[10px] text-slate-500 border-t border-slate-100 pt-1">
+              <span>📍 <b>${vCount}</b> หมู่บ้าน</span>
+              ${area ? `<span>📐 ${parseFloat(area).toFixed(1)} ตร.กม.</span>` : ''}
+            </div>
+          </div>
+        `;
+        layer.bindTooltip(tooltipContent, {
+          sticky: true,
+          direction: 'top',
+          className: 'shadow-lg border border-slate-200 rounded-xl'
+        });
+
+        const popupContent = `
+          <div style="font-family:'Prompt',sans-serif; padding:4px 2px; min-width: 175px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+              <b style="font-size:14px; color:${color};">ต.${t}</b>
+              ${isMekong ? '<span style="font-size:10px; background:#cffafe; color:#0e7490; padding:2px 6px; border-radius:12px; font-weight:bold;">🌊 ริมโขง</span>' : ''}
+            </div>
+            <div style="font-size:12px; color:#475569; margin-top:2px;">อ.${d} จ.${p}</div>
+            <div style="font-size:11px; color:#64748b; margin-top:6px; border-top:1px solid #e2e8f0; padding-top:6px; display:flex; justify-content:space-between;">
+              <span>📍 <b>${vCount}</b> หมู่บ้าน</span>
+              ${area ? `<span>📐 <b>${parseFloat(area).toFixed(1)}</b> ตร.กม.</span>` : ''}
+            </div>
+            <button onclick="selectSingleTambonFromMap('${t}', '${d}', '${p}')" 
+                    style="width:100%; margin-top:8px; padding:5px 8px; background:#2563eb; color:white; border-radius:8px; font-size:11px; font-weight:bold; border:none; cursor:pointer;">
+              🎯 กรองดูเฉพาะตำบลนี้
+            </button>
+          </div>
+        `;
+        layer.bindPopup(popupContent);
+
+        tambonBoundaryLayerGroup.addLayer(layer);
+      });
+    }
+
+    function renderVillageRadiuses(activeFilteredVillages) {
+      if (!map || !villageRadiusLayerGroup) return;
+      villageRadiusLayerGroup.clearLayers();
+      if (!showVillageRadius || villageRadiusMeters <= 0) return;
+
+      const list = activeFilteredVillages || [];
+      list.forEach(v => {
+        const rawLat = parseFloat(v['ละติจูด (Latitude)']);
+        const rawLng = parseFloat(v['ลองจิจูด (Longitude)']);
+        if (isNaN(rawLat) || isNaN(rawLng)) return;
+
+        const color = getTambonColor(v['ตำบล']);
+        const circle = L.circle([rawLat, rawLng], {
+          radius: villageRadiusMeters,
+          pane: 'radiusPane',
+          color: color,
+          weight: 1.2,
+          opacity: 0.65,
+          fillColor: color,
+          fillOpacity: 0.14,
+          interactive: false
+        });
+        villageRadiusLayerGroup.addLayer(circle);
+      });
+    }
+
+    function toggleTambonBoundaries(show) {
+      showTambonBoundaries = !!show;
+      const cb = document.getElementById('boundaries-toggle');
+      if (cb) cb.checked = showTambonBoundaries;
+
+      const quickBtn = document.getElementById('quick-boundaries-btn');
+      const quickTxt = document.getElementById('quick-boundaries-text');
+      if (quickBtn && quickTxt) {
+        if (showTambonBoundaries) {
+          quickBtn.className = "px-2.5 py-1 rounded-xl bg-blue-600 text-white transition flex items-center gap-1 shadow-xs text-xs font-semibold";
+          quickTxt.textContent = "ขอบเขต: เปิด";
+        } else {
+          quickBtn.className = "px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1 shadow-xs text-xs font-semibold";
+          quickTxt.textContent = "ขอบเขต: ปิด";
+        }
+      }
+
+      renderTambonBoundaries(currentFilteredVillages);
+    }
+
+    function toggleTambonBoundariesQuick() {
+      toggleTambonBoundaries(!showTambonBoundaries);
+    }
+
+    function setVillageRadius(meters) {
+      villageRadiusMeters = parseInt(meters) || 0;
+      showVillageRadius = villageRadiusMeters > 0;
+
+      const label = document.getElementById('radius-val-label');
+      if (label) {
+        label.textContent = villageRadiusMeters === 0 ? 'ปิด' : `${villageRadiusMeters / 1000} กม.`;
+      }
+
+      [0, 1000, 2000, 3000, 5000].forEach(m => {
+        const btn = document.getElementById(`radius-btn-${m}`);
+        if (!btn) return;
+        if (m === villageRadiusMeters) {
+          btn.className = "py-1 rounded bg-blue-600 text-white font-bold transition";
+        } else {
+          btn.className = "py-1 rounded bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition";
+        }
+      });
+
+      const quickBtn = document.getElementById('quick-radius-btn');
+      const quickTxt = document.getElementById('quick-radius-text');
+      if (quickBtn && quickTxt) {
+        if (showVillageRadius) {
+          quickBtn.className = "px-2 py-1 rounded-xl bg-indigo-600 text-white transition flex items-center gap-1 shadow-xs text-xs font-semibold";
+          quickTxt.textContent = `รัศมี: ${villageRadiusMeters / 1000} กม.`;
+        } else {
+          quickBtn.className = "px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1 shadow-xs text-xs font-semibold";
+          quickTxt.textContent = "รัศมี: ปิด";
+        }
+      }
+
+      renderVillageRadiuses(currentFilteredVillages);
+    }
+
+    const RADIUS_STEPS = [0, 1000, 2000, 3000, 5000];
+    function cycleVillageRadiusQuick() {
+      const idx = RADIUS_STEPS.indexOf(villageRadiusMeters);
+      const nextIdx = (idx + 1) % RADIUS_STEPS.length;
+      setVillageRadius(RADIUS_STEPS[nextIdx]);
+    }
+
+    function selectSingleTambonFromMap(t, d, p) {
+      if (map) map.closePopup();
+      selectedProvinces.clear();
+      if (p) selectedProvinces.add(p);
+      selectedDistricts.clear();
+      if (d) selectedDistricts.add(d);
+      selectedTambons.clear();
+      if (t) selectedTambons.add(t);
+      populateProvinceDropdown();
+      populateDistrictDropdown();
+      populateTambonDropdown();
+      renderTambonLegend();
+      applyCurrentFiltersAndRender(true);
+      showToast(`📍 กรองดูเฉพาะ ต.${t} (อ.${d} จ.${p})`);
     }
 
     // --- HOVER HIGHLIGHT MARKER ON MAP ---
@@ -6942,6 +7245,8 @@
 
       // Re-render markers on map
       renderMarkersOnMap(currentFilteredVillages);
+      renderTambonBoundaries(currentFilteredVillages);
+      renderVillageRadiuses(currentFilteredVillages);
 
       // Update status pill
       let statusText = '';
