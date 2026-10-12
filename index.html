@@ -5620,21 +5620,18 @@
 
     // Set of subdistricts bordering the Mekong River (Province|District|Tambon)
     const MEKONG_TAMBON_KEYS = new Set([
-      // หนองคาย
+      // หนองคาย (23 ตำบล)
       'หนองคาย|สังคม|สังคม',
       'หนองคาย|ศรีเชียงใหม่|พานพร้าว',
       'หนองคาย|ศรีเชียงใหม่|พระพุทธบาท',
       'หนองคาย|ศรีเชียงใหม่|บ้านหม้อ',
       'หนองคาย|ท่าบ่อ|กองนาง',
       'หนองคาย|ท่าบ่อ|ท่าบ่อ',
-      'หนองคาย|ท่าบ่อ|น้ำโมง',
       'หนองคาย|ท่าบ่อ|โพนสา',
       'หนองคาย|เมืองหนองคาย|ในเมือง',
       'หนองคาย|เมืองหนองคาย|มีชัย',
-      'หนองคาย|เมืองหนองคาย|โพธิ์ชัย',
       'หนองคาย|เมืองหนองคาย|กวนวัน',
       'หนองคาย|เมืองหนองคาย|เวียงคุก',
-      'หนองคาย|เมืองหนองคาย|วัดธาตุ',
       'หนองคาย|เมืองหนองคาย|หาดคำ',
       'หนองคาย|เมืองหนองคาย|หินโงม',
       'หนองคาย|เมืองหนองคาย|ปะโค',
@@ -5644,13 +5641,11 @@
       'หนองคาย|โพนพิสัย|จุมพล',
       'หนองคาย|โพนพิสัย|กุดบง',
       'หนองคาย|โพนพิสัย|วัดหลวง',
-      'หนองคาย|โพนพิสัย|สร้างนางขาว',
-      'หนองคาย|รัตนวาปี|พระบาทนาสิงห์',
       'หนองคาย|รัตนวาปี|รัตนวาปี',
       'หนองคาย|รัตนวาปี|โพนแพง',
       'หนองคาย|รัตนวาปี|บ้านต้อน',
 
-      // บึงกาฬ
+      // บึงกาฬ (12 ตำบล)
       'บึงกาฬ|ปากคาด|ปากคาด',
       'บึงกาฬ|ปากคาด|นากั้ง',
       'บึงกาฬ|เมืองบึงกาฬ|หอคำ',
@@ -5658,23 +5653,29 @@
       'บึงกาฬ|เมืองบึงกาฬ|วิศิษฐ์',
       'บึงกาฬ|เมืองบึงกาฬ|บึงกาฬ',
       'บึงกาฬ|เมืองบึงกาฬ|โคกก่อง',
+      'บึงกาฬ|บึงกาฬ|หอคำ',
+      'บึงกาฬ|บึงกาฬ|ไคสี',
+      'บึงกาฬ|บึงกาฬ|วิศิษฐ์',
+      'บึงกาฬ|บึงกาฬ|บึงกาฬ',
+      'บึงกาฬ|บึงกาฬ|โคกก่อง',
       'บึงกาฬ|บุ่งคล้า|หนองเดิ่น',
       'บึงกาฬ|บุ่งคล้า|บุ่งคล้า',
       'บึงกาฬ|บุ่งคล้า|โคกกว้าง',
       'บึงกาฬ|บึงโขงหลง|ท่าดอกคำ',
       'บึงกาฬ|บึงโขงหลง|ดงบัง',
 
-      // นครพนม
+      // นครพนม (26 ตำบล)
       'นครพนม|บ้านแพง|ไผ่ล้อม',
       'นครพนม|บ้านแพง|นางัว',
+      'นครพนม|บ้านแพง|นาเข',
       'นครพนม|บ้านแพง|บ้านแพง',
+      'นครพนม|บ้านแพง|หนองแวง',
       'นครพนม|ท่าอุเทน|พะทาย',
       'นครพนม|ท่าอุเทน|หนองเทา',
       'นครพนม|ท่าอุเทน|พนอม',
       'นครพนม|ท่าอุเทน|ไชยบุรี',
       'นครพนม|ท่าอุเทน|ท่าจำปา',
       'นครพนม|ท่าอุเทน|ท่าอุเทน',
-      'นครพนม|ท่าอุเทน|โนนตาล',
       'นครพนม|ท่าอุเทน|เวินพระบาท',
       'นครพนม|เมืองนครพนม|อาจสามารถ',
       'นครพนม|เมืองนครพนม|หนองแสง',
@@ -5685,18 +5686,23 @@
       'นครพนม|เมืองนครพนม|บ้านกลาง',
       'นครพนม|ธาตุพนม|นาถ่อน',
       'นครพนม|ธาตุพนม|ดอนนางหงส์',
+      'นครพนม|ธาตุพนม|แสนพัน',
       'นครพนม|ธาตุพนม|พระกลางทุ่ง',
       'นครพนม|ธาตุพนม|ธาตุพนมเหนือ',
       'นครพนม|ธาตุพนม|ธาตุพนม',
-      'นครพนม|ธาตุพนม|ฝั่งแดง',
-      'นครพนม|ธาตุพนม|น้ำก่ำ',
-      'นครพนม|ธาตุพนม|อุ่มเหม้า'
+      'นครพนม|ธาตุพนม|น้ำก่ำ'
     ]);
 
     function isVillageOnMekong(v) {
       if (!v) return false;
-      const key = `${v['จังหวัด']}|${v['อำเภอ']}|${v['ตำบล']}`;
-      return MEKONG_TAMBON_KEYS.has(key);
+      const p = v['จังหวัด'] || '';
+      const d = v['อำเภอ'] || '';
+      const t = v['ตำบล'] || '';
+      const key = `${p}|${d}|${t}`;
+      if (MEKONG_TAMBON_KEYS.has(key)) return true;
+      const normD = d.replace(/^เมือง/, '');
+      if (MEKONG_TAMBON_KEYS.has(`${p}|${normD}|${t}`) || MEKONG_TAMBON_KEYS.has(`${p}|เมือง${normD}|${t}`)) return true;
+      return false;
     }
 
     function isTambonOnMekongInScope(tambonName, scopeList) {
@@ -5708,6 +5714,22 @@
         }
       }
       return false;
+    }
+
+    function isTambonMekongMatch(p, d, t, altT) {
+      if (!p || !d) return false;
+      const normD = d.replace(/^เมือง/, '');
+      const candidates = [
+        `${p}|${d}|${t}`,
+        `${p}|${normD}|${t}`,
+        `${p}|เมือง${normD}|${t}`
+      ];
+      if (altT) {
+        candidates.push(`${p}|${d}|${altT}`);
+        candidates.push(`${p}|${normD}|${altT}`);
+        candidates.push(`${p}|เมือง${normD}|${altT}`);
+      }
+      return candidates.some(k => MEKONG_TAMBON_KEYS.has(k));
     }
 
     function toggleFilterMekongInDropdown() {
@@ -5734,7 +5756,8 @@
 
       selectedTambons.clear();
       let matchedCount = 0;
-      allTambonsList.forEach(t => {
+      const targetTambons = [...new Set(list.map(v => v['ตำบล']).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+      targetTambons.forEach(t => {
         if (isTambonOnMekongInScope(t, list)) {
           selectedTambons.add(t);
           matchedCount++;
@@ -6195,24 +6218,32 @@
         return;
       }
 
-      // Pre-calculate count of villages in each tambon
-      const countMap = new Map();
-      villages.forEach(v => {
-        const k = `${v['จังหวัด']}|${v['อำเภอ']}|${v['ตำบล']}`;
-        countMap.set(k, (countMap.get(k) || 0) + 1);
-      });
-
       const hasProvFilter = selectedProvinces.size > 0 && selectedProvinces.size < allProvincesList.length;
       const hasDistFilter = selectedDistricts.size > 0 && selectedDistricts.size < allDistrictsList.length;
       const hasTambonFilter = selectedTambons.size > 0;
+      const hasAnySelection = selectedProvinces.size > 0 || selectedDistricts.size > 0 || selectedTambons.size > 0;
+
+      // ถ้ายังไม่ได้เลือกพื้นที่ ไม่ต้องเรนเดอร์ขอบเขตทั้งหมด เพื่อความเร็วและไม่หน่วง
+      if (!hasAnySelection) {
+        return;
+      }
+
+      // Pre-calculate count of villages in each tambon
+      const countMap = new Map();
+      villages.forEach(v => {
+        const k = `${v['จังหวัด']}|${normalizeAmphoeForMatch(v['อำเภอ'])}|${v['ตำบล']}`;
+        countMap.set(k, (countMap.get(k) || 0) + 1);
+      });
 
       // Supported target provinces (Nong Khai, Bueng Kan, Nakhon Phanom)
       const targetProvs = new Set(['หนองคาย', 'บึงกาฬ', 'นครพนม']);
+      const allSelectedAreMekong = hasTambonFilter && [...selectedTambons].every(name => isTambonOnMekongInScope(name, villages));
 
       TAMBON_BOUNDARIES_GEOJSON.features.forEach(feat => {
         const p = feat.properties.pro_th;
         const d = feat.properties.amp_th;
         const t = feat.properties.tam_th;
+        const altT = feat.properties.alt_th;
         if (!targetProvs.has(p)) return;
 
         // Check scope
@@ -6226,16 +6257,40 @@
 
         // If specific tambons are selected:
         if (hasTambonFilter) {
-          if (!selectedTambons.has(t)) return;
+          const isSelectedTambon = selectedTambons.has(t) || (altT && selectedTambons.has(altT));
+          if (!isSelectedTambon) return;
+
+          // Disambiguate tambon to make sure it belongs to the district/province in active dataset scope
+          const matchesScopeTambon = villages.some(v => 
+            (v['ตำบล'] === t || (altT && v['ตำบล'] === altT)) &&
+            v['จังหวัด'] === p &&
+            normalizeAmphoeForMatch(v['อำเภอ']) === normalizeAmphoeForMatch(d)
+          );
+          if (!matchesScopeTambon) return;
+
           // Mekong River disambiguation
-          const allSelectedAreMekong = [...selectedTambons].every(name => isTambonOnMekongInScope(name, villages));
-          if (allSelectedAreMekong && !MEKONG_TAMBON_KEYS.has(`${p}|${d}|${t}`)) return;
+          if (allSelectedAreMekong && !isTambonMekongMatch(p, d, t, altT)) return;
         }
 
-        const color = getTambonColor(t);
-        const k = `${p}|${d}|${t}`;
-        const vCount = countMap.get(k) || 0;
-        const isMekong = MEKONG_TAMBON_KEYS.has(k);
+        const normD = normalizeAmphoeForMatch(d);
+        let vCount = countMap.get(`${p}|${normD}|${t}`) || 0;
+        if (altT) {
+          vCount += countMap.get(`${p}|${normD}|${altT}`) || 0;
+        }
+
+        let displayTambonName = t;
+        if (altT) {
+          if (selectedTambons.has(altT) && !selectedTambons.has(t)) {
+            displayTambonName = altT;
+          } else if (selectedTambons.has(t) && !selectedTambons.has(altT)) {
+            displayTambonName = t;
+          } else {
+            displayTambonName = (t === 'สองห้อง' && (countMap.get(`${p}|${normD}|สองห้อง`) || 0) === 0) ? altT : t;
+          }
+        }
+
+        const color = getTambonColor(displayTambonName);
+        const isMekong = isTambonMekongMatch(p, d, t, altT);
         const area = feat.properties.area_sqkm;
 
         const isHighlight = hasTambonFilter || hasDistFilter;
@@ -6280,7 +6335,7 @@
           <div class="px-2 py-1 font-sans text-xs select-none">
             <div class="font-bold flex items-center gap-1.5" style="color: ${color}">
               <i class="fa-solid fa-landmark text-[10px]"></i>
-              <span>ต.${t}</span>
+              <span>ต.${displayTambonName}</span>
               ${isMekong ? '<span class="text-[9px] bg-cyan-100 text-cyan-800 px-1.5 py-0.2 rounded-full font-semibold border border-cyan-200">🌊 ริมโขง</span>' : ''}
             </div>
             <div class="text-[11px] text-slate-600 mt-0.5">อ.${d} จ.${p}</div>
@@ -6299,7 +6354,7 @@
         const popupContent = `
           <div style="font-family:'Prompt',sans-serif; padding:4px 2px; min-width: 175px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-              <b style="font-size:14px; color:${color};">ต.${t}</b>
+              <b style="font-size:14px; color:${color};">ต.${displayTambonName}</b>
               ${isMekong ? '<span style="font-size:10px; background:#cffafe; color:#0e7490; padding:2px 6px; border-radius:12px; font-weight:bold;">🌊 ริมโขง</span>' : ''}
             </div>
             <div style="font-size:12px; color:#475569; margin-top:2px;">อ.${d} จ.${p}</div>
@@ -6307,7 +6362,7 @@
               <span>📍 <b>${vCount}</b> หมู่บ้าน</span>
               ${area ? `<span>📐 <b>${parseFloat(area).toFixed(1)}</b> ตร.กม.</span>` : ''}
             </div>
-            <button onclick="selectSingleTambonFromMap('${t}', '${d}', '${p}')" 
+            <button onclick="selectSingleTambonFromMap('${displayTambonName}', '${d}', '${p}')" 
                     style="width:100%; margin-top:8px; padding:5px 8px; background:#2563eb; color:white; border-radius:8px; font-size:11px; font-weight:bold; border:none; cursor:pointer;">
               🎯 กรองดูเฉพาะตำบลนี้
             </button>
@@ -7083,6 +7138,8 @@
         return [];
       }
 
+      const allSelectedAreMekong = hasTambonFilter && [...selectedTambons].every(t => isTambonOnMekongInScope(t, villages));
+
       return villages.filter(v => {
         // 1. ตัวกรองจังหวัด (ถ้ามีการเลือก)
         if (hasProvinceFilter && !selectedProvinces.has(v['จังหวัด'])) {
@@ -7099,7 +7156,6 @@
           if (!selectedTambons.has(v['ตำบล'])) {
             return false;
           }
-          const allSelectedAreMekong = [...selectedTambons].every(t => isTambonOnMekongInScope(t, villages));
           if (allSelectedAreMekong && !isVillageOnMekong(v)) {
             return false;
           }
